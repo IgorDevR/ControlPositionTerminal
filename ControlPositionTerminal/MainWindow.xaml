@@ -1,0 +1,137 @@
+﻿<Window x:Class="ControlPositionTerminal.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ControlPositionTerminal"
+        xmlns:util="clr-namespace:ControlPositionTerminal.Util"
+        d:DataContext="{d:DesignInstance Type=local:ViewModel}"
+        mc:Ignorable="d"
+        Closing="MainWindow_OnClosing"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <TabControl Margin="0,0,0,118">
+            <TabItem Header="Position control">
+                <Grid Background="#FFE5E5E5">
+                    <StackPanel>
+                        <WrapPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Button Content="Получить открытые позиции"  Margin="0,10,0,0" Click="RetrieveOpenPosition_Click"/>
+                            <Label Content="Размер частично закрываемой позиции" VerticalAlignment="Bottom" Margin="10,20,0,0"/>
+                            <TextBox x:Name="SizePartClosePositionTextBox" Width="100"  Margin="10,20,0,0"/>
+                        </WrapPanel>
+                        <StackPanel>
+                            <ScrollViewer>
+                                <DataGrid x:Name="OpenPositionDataGrid" AutoGenerateColumns="False" MaxHeight="500">
+                                </DataGrid>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Leverage settings">
+                <Grid Background="#FFE5E5E5">
+                    <StackPanel>
+                        <WrapPanel HorizontalAlignment="Center" >
+                            <Button Content="Получить список для всех монет" Margin="5,5,5,5" Click="GetAllSymbolCoinsAndLeverage_Click"/>
+                            <Label Content="Монета:" Margin="5,5,5,5"/>
+                            <TextBox x:Name="SelectLeverageSymbolTextBlock" IsReadOnly="True" Width="100" Margin="5,5,5,5"/>
+                            <Label Content="Новое значение:" Margin="5,5,5,5"/>
+                            <TextBox x:Name="NewLeverageValueTextBlock" Width="100" Margin="5,5,5,5"/>
+                        </WrapPanel>
+                        <WrapPanel HorizontalAlignment="Center">
+                            <Button Content="Установить новое значение" Margin="5,5,5,5" Click="SetNewValueLeverageSelectSymbol_Click"/>
+                            <Button Content="Установить значение для всех монет" Margin="5,5,5,5" Click="SetNewValueLeverageAllSymbol_Click"/>
+                        </WrapPanel>
+                        <DataGrid x:Name="SymbolAndLeverageDataGrid" AutoGenerateColumns="False" MaxHeight="500">
+                        </DataGrid>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Connect settings">
+                <Grid Background="#FFE5E5E5">
+                    <StackPanel>
+                        <Expander Header="Binance">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Api Key"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Secret Key"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" x:Name="ApiKeyBinanceSpot" Width="300"/>
+                                <TextBox Grid.Row="0" Grid.Column="3" x:Name="SecretKeyBinanceSpot" Width="300"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Api Key"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Secret Key"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApiKeyBinanceFutures" Width="300"/>
+                                <TextBox Grid.Row="1" Grid.Column="3" x:Name="SecretKeyBinanceFutures" Width="300"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Api Key"/>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Secret Key"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" x:Name="ApiKeyBinanceFuturesTestnet" Width="300"/>
+                                <TextBox Grid.Row="2" Grid.Column="3" x:Name="SecretKeyBinanceFuturesTestnet" Width="300"/>
+
+                            </Grid>
+                        </Expander>
+                        <Expander Header="GateIo">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Api Key"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Secret Key"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" x:Name="ApiKeyGateIoSpot" Width="300"/>
+                                <TextBox Grid.Row="0" Grid.Column="3" x:Name="SecretKeyGateIoSpot" Width="300"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Api Key"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Secret Key"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApiKeyGateIoFutures" Width="300"/>
+                                <TextBox Grid.Row="1" Grid.Column="3" x:Name="SecretKeyGateIoFutures" Width="300"/>
+
+                            </Grid>
+                        </Expander>
+                        <GroupBox >
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Label Content="Сервер: " />
+                                <ComboBox x:Name="SelectedServerType" Width="120" ItemsSource="{Binding Path=EnumValuesTypesServerEnum}"   SelectedItem="{Binding SelectedServerType, Mode=TwoWay}" />
+
+                                <Label Content="Тип рынка: "/>
+                                <ComboBox x:Name="SelectedMarketType" Width="120" ItemsSource="{Binding Path=EnumValuesTypesMarketEnum}"  SelectedItem="{Binding SelectedMarketType, Mode=TwoWay}" />
+
+                                <Label Content="Валюта рынка: "/>
+                                <ComboBox x:Name="SelectedCoinType" Width="120" ItemsSource="{Binding Path=EnumValuesTypesMarketCoinEnum}"   SelectedItem="{Binding SelectedCoinType, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <Button Content="Сохранить/Обовить настройки" Padding="5" Margin="0,10,0,0" Click="SaveOrUpdateSettings_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <Grid Background="#FFE5E5E5" Margin="0,321,0,0">
+            <ListView x:Name="PrimeLogListView" ItemsSource="{Binding Source={x:Static util:LogList.logList}}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Log" Width="800"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </Grid>
+</Window>
