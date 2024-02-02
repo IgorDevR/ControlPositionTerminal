@@ -12,7 +12,7 @@ namespace ControlPositionTerminal.Util.Enums
     Binance_UsdM_Futures,
     Binance_CoinM_Futures,
     Binance_UsdM_FuturesTestnet,
-    Binance_CoiM_FuturesTestet,
+    Binance_CoinM_FuturesTestnet,
     GateIo_UsdM_Spot,
     GateIo_UsdM_Futures
 

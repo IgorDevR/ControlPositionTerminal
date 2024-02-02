@@ -8,5 +8,8 @@
     <Setting Name="WindowSize" Type="System.Drawing.Size" Scope="User">
       <Value Profile="(Default)">700, 500</Value>
     </Setting>
+    <Setting Name="MainWindowTitle" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MainWindow</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

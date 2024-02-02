@@ -9,6 +9,13 @@ namespace GBinanceFuturesClient.Model.Internal
     {
         public List<T> Deserialize(string response)
         {
+            if (response.Contains("\"code\":") && response.Contains("\"msg\":")
+                || (response.Contains("\"status\":") && response.Contains("404")))
+            {
+                var errorResponse = JsonTools.DeserializeFromJson<ApiResponseError>(response);
+                throw new ApiException(errorResponse.Code, errorResponse.Msg  + ". " + errorResponse.Status);
+            }
+
             List<T> responseDeserialized;
 
             if (response[0] == '[')

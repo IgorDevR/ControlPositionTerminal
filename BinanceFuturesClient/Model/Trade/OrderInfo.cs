@@ -107,6 +107,11 @@ namespace GBinanceFuturesClient.Model.Trade
         /// </summary>
         [JsonProperty("priceRate")]
         public decimal PriceRate { get; set; }
+        /// <summary>
+        /// Order time.
+        /// </summary>
+        [JsonProperty("time")]
+        public long Time { get; set; }
 
         /// <summary>
         /// Order update time.

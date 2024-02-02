@@ -50,7 +50,7 @@ namespace ControlPositionTerminal.Binance
         {
             OrderSide orderSide = closePos.PositionAmount > 0 ? OrderSide.SELL : OrderSide.BUY;
             decimal quantity;
-            decimal closingPartSize = decimal.Parse(partSize, NumberStyles.Any, CultureInfo.InvariantCulture);
+            decimal.TryParse(partSize, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal closingPartSize);
             if (closingPartSize != 0)
             {
                 quantity = closingPartSize;

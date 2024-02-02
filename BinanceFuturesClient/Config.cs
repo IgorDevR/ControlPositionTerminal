@@ -8,47 +8,42 @@ namespace GBinanceFuturesClient
     {
         // https://testnet.binancefuture.com/
         // http://localhost:1234/
-        const string TestNetUrl = "https://testnet.binancefuture.com/";
-        const string ApiUrl = "https://fapi.binance.com/";
+        private const string TestNetUrl = "https://testnet.binancefuture.com/";
 
-        static string Url { get; set; } = ApiUrl;
+        private const string ApiUrl = "https://fapi.binance.com/";
+
+        private static string Url { get; set; } = ApiUrl;
 
         internal static bool IsTestnet { get; private set; } = false;
 
-        internal static string ApiPublicUrl { 
-            get { 
-                return Url + "fapi/v1/"; 
-            }
+        internal static string ApiPublicUrl
+        {
+            get { return Url + "fapi/v1/"; }
+        }
+
+        internal static string ApiPublicUrlCoinM
+        {
+            get { return Url + "dapi/v1/"; }
         }
 
         internal static string ApiPublicV2Url
         {
-            get
-            {
-                return Url + "fapi/v2/";
-            }
+            get { return Url + "fapi/v2/"; }
         }
 
-        internal static string ApiFuturesDataUrl { 
-            get 
-            { 
-                return Url + "futures/data/"; 
-            }
+        internal static string ApiFuturesDataUrl
+        {
+            get { return Url + "futures/data/"; }
         }
 
-        internal static string ApiPrivateUrl { 
-            get
-            { 
-                return Url + "sapi/v1/futures";
-            }
+        internal static string ApiPrivateUrl
+        {
+            get { return Url + "sapi/v1/futures"; }
         }
 
         internal static string ApiAccountTransferAndHistoryUrl
         {
-            get
-            {
-                return @"https://api.binance.com/sapi/v1/futures/";
-            }
+            get { return @"https://api.binance.com/sapi/v1/futures/"; }
         }
 
         internal static void UseTestnet(bool use)
@@ -63,7 +58,6 @@ namespace GBinanceFuturesClient
                 IsTestnet = false;
                 Url = ApiUrl;
             }
-
         }
     }
 }

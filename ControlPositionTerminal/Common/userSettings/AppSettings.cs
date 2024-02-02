@@ -44,6 +44,8 @@ namespace ControlPositionTerminal.Common.UserSettings
             return Instance;
         }
 
+        public string MainWindowName { get; set; }
+
         public string ApiKeyBinanceSpot { get; set; }
         public string SecretKeyBinanceSpot { get; set; }
 
@@ -63,14 +65,12 @@ namespace ControlPositionTerminal.Common.UserSettings
         public string ApiKeyGateIoFutures { get; set; }
         public string SecretKeyGateIoFutures { get; set; }
 
-        //public TypesServerEnum SelectedServerType = TypesServerEnum.None;
-        //public TypesMarketEnum SelectedMarketType = TypesMarketEnum.None;
-        //public TypesMarketCoinEnum SelectedCoinType = TypesMarketCoinEnum.UsdM;
+
         public TypesServerEnum SelectedServerType { get; set; }
         public TypesMarketEnum SelectedMarketType { get; set; }
         public TypesMarketCoinEnum SelectedCoinType { get; set; }
 
-        public FullNameSelectServerEnum FullNameSelectServerEnum = FullNameSelectServerEnum.None;
+        public FullNameSelectServerEnum FullNameSelectServerEnum { get; set; }
 
         public IExchangeServiceWrapper GetExchangeService()
         {
@@ -80,8 +80,8 @@ namespace ControlPositionTerminal.Common.UserSettings
         {
             try
             {
-                string FullNameSelectServer = SelectedServerType + "_" + SelectedCoinType + "_" + SelectedMarketType;
-                FullNameSelectServerEnum = Enum.Parse<FullNameSelectServerEnum>(FullNameSelectServer);
+                string fullNameSelectServer = SelectedServerType + "_" + SelectedCoinType + "_" + SelectedMarketType;
+                FullNameSelectServerEnum = Enum.Parse<FullNameSelectServerEnum>(fullNameSelectServer);
             }
             catch (Exception e)
             {

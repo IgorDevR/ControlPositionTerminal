@@ -58,3 +58,27 @@ namespace GBinanceFuturesClient
         }
     }
 }
+
+public class ApiResponseError
+{
+    public int Code { get; set; }
+    public string Msg { get; set; }
+    public string Status { get; set; }
+}
+
+public class ApiException : Exception
+{
+    public int ErrorCode { get; private set; }
+    public string ErrorMessage { get; private set; }
+
+    public ApiException(int errorCode, string message) : base(message)
+    {
+        ErrorCode = errorCode;
+        ErrorMessage = message;
+    }
+    public ApiException(int errorCode, string message, string status) : base(message)
+    {
+        ErrorCode = errorCode;
+        ErrorMessage = message + ". " + status;
+    }
+}

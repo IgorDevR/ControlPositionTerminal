@@ -21,8 +21,8 @@ public class ExecuteWithExceptionHandling
         }
         catch (Exception e)
         {
-            ExceptionLog.SetLogMessage(e);
-            return default(T); // return the default value for type T in case of an exception
+            ApplicationLog.LogException(e);
+            throw; 
         }
     }
 }

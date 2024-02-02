@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace ControlPositionTerminal.Common.Model
 {
   /// <summary>
@@ -22,6 +24,11 @@ namespace ControlPositionTerminal.Common.Model
     public string EntryPrice { get; set; }
     public string Amount { get; set; }
     public string Side { get; set; }
+
+    public override string ToString()
+    {
+      return $"Num: {Num}, Symbol: {Symbol}, Price: {EntryPrice}, Amount: {Amount}, Side: {Side}";
+    }
 
   }
 }

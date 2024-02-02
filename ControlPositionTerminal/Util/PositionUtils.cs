@@ -32,7 +32,19 @@ namespace ControlPositionTerminal.Util
             }
             return positionData;
         }
+        /// <summary>
+        /// Проверить список позиций и добавить пустую позицию, если список пуст.
+        /// </summary>
+        /// <param name="positionData">Список позиций.</param>
+        public static List<OrderData> CheckAndAddEmptyOrder(List<OrderData> positionData)
+        {
+            if (positionData.Count == 0)
+            {
+                positionData.Add(new OrderData("1", "открытых", "ордеров", "нет", "None", "None", "None"));
+            }
+            return positionData;
+        }
 
- 
+
     }
 }

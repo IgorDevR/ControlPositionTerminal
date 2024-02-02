@@ -1,38 +1,33 @@
-using ControlPositionTerminal.Binance;
-using ControlPositionTerminal.Common;
-using ControlPositionTerminal.Common.Mapper;
+﻿using System;
 using ControlPositionTerminal.Common.Model;
-using ControlPositionTerminal.Exceptions;
-using ControlPositionTerminal.Util;
-using GBinanceFuturesClient;
 using GBinanceFuturesClient.Model.Trade;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using ControlPositionTerminal.Exceptions;
+using GBinanceFuturesClient;
+using Io.Gate.GateApi.Model;
+using ControlPositionTerminal.Util;
+using ControlPositionTerminal.Binance;
+using ControlPositionTerminal.Common.Mapper;
+using System.Linq;
 
 namespace ControlPositionTerminal.Service;
 
-[Serializable]
-public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
+public class BinanceCMFuturesServiceWrapper : BinanceUMFuturesServiceWrapper
 {
-    protected readonly BinanceFuturesClient _client;
-
-    public BinanceUMFuturesServiceWrapper(string key, string secret, bool isUseTestnet)
+    public BinanceCMFuturesServiceWrapper(string key, string secret, bool isUseTestnet) : base(key, secret,
+        isUseTestnet)
     {
-        this._client = new BinanceFuturesClient();
-        _client.SetAutorizationData(key, secret);
-        _client.UseTestnet(isUseTestnet);
     }
 
-    public virtual async Task<List<PositionData>> RetrieveOpenPositionsAsync()
+    public override async Task<List<PositionData>> RetrieveOpenPositionsAsync()
     {
         List<PositionInforamtionItem> positions = new List<PositionInforamtionItem>();
         try
         {
             positions = await Task.Run(() =>
-                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetPositionsInformation(false)));
+                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetPositionsInformation(true)));
         }
         catch (Exception e)
         {
@@ -44,13 +39,13 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         return GetOnlyOpenPositionDataFromResult(positions);
     }
 
-    public virtual async Task<List<InitialLeverage>> RetrieveAllLeverageCoinsAsync()
+    public override async Task<List<InitialLeverage>> RetrieveAllLeverageCoinsAsync()
     {
         List<PositionInforamtionItem> positions = new List<PositionInforamtionItem>();
         try
         {
             positions = await Task.Run(() =>
-                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetPositionsInformation(false)));
+                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetPositionsInformation(true)));
         }
         catch (Exception e)
         {
@@ -63,7 +58,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         return nameAndLeverageAllCoins;
     }
 
-    public virtual async Task CloseSelectPositionAsync(List<PositionData> closePositions, string partSize)
+    public override async Task CloseSelectPositionAsync(List<PositionData> closePositions, string partSize)
     {
         foreach (var closePos in closePositions)
         {
@@ -78,11 +73,11 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
             {
                 orderInfo = await Task.Run(() =>
                     ExecuteWithExceptionHandling.Execute(() =>
-                        _client.Trade.PlaceOrder(parameterCloseOrderMarket, false)));
+                        _client.Trade.PlaceOrder(parameterCloseOrderMarket, true)));
                 await Task.Delay(2000);
                 OrderInfo info = await Task.Run(() =>
                     ExecuteWithExceptionHandling.Execute(() =>
-                        _client.Trade.GetOrder(orderInfo.Symbol, orderInfo.OrderId, 10000, false)));
+                        _client.Trade.GetOrder(orderInfo.Symbol, orderInfo.OrderId, 10000, true)));
                 if (info != null)
                 {
                     LogList.AddLog("Закрытие позиции: " + closePos + ". Закрытый размер: " + info.ExecutedQty);
@@ -97,7 +92,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         }
     }
 
-    public virtual async Task SetNewValueLeverage<T>(List<T> symbols, string leverageStr)
+    public override async Task SetNewValueLeverage<T>(List<T> symbols, string leverageStr)
     {
         int.TryParse(leverageStr, out int leverage);
         int i = 0;
@@ -125,7 +120,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
             {
                 await Task.Run(() =>
                     ExecuteWithExceptionHandling.Execute(() =>
-                        _client.Trade.ChangeLeverage(symbolAndLeverage.Symbol, leverage, isCoinM: false)));
+                        _client.Trade.ChangeLeverage(symbolAndLeverage.Symbol, leverage, isCoinM: true)));
             }
             catch (Exception e)
             {
@@ -136,7 +131,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         }
     }
 
-    public virtual List<PositionData> GetOnlyOpenPositionDataFromResult<T>(List<T> positions)
+    public override List<PositionData> GetOnlyOpenPositionDataFromResult<T>(List<T> positions)
     {
         List<PositionData> positionData = PositionMapper.BinancePositionsToPositionData(positions);
         positionData = PositionUtils.GetOpenPositions(positionData);
@@ -144,7 +139,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         return positionData;
     }
 
-    public virtual List<InitialLeverage> GetNameAndLeverageAllCoins(List<PositionInforamtionItem> result)
+    public override List<InitialLeverage> GetNameAndLeverageAllCoins(List<PositionInforamtionItem> result)
     {
         List<InitialLeverage> symbolAndLeverage = result
             .Select(dto => new InitialLeverage(dto.Symbol, dto.Leverage))
@@ -153,12 +148,12 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         return symbolAndLeverage;
     }
 
-    public virtual async Task<List<OrderData>> RetrieveAllOpenOrdersAsync()
+    public override async Task<List<OrderData>> RetrieveAllOpenOrdersAsync()
     {
         try
         {
             List<OrderInfo> orders = await Task.Run(() =>
-                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetAllOpenOrders()));
+                ExecuteWithExceptionHandling.Execute(() => _client.Trade.GetAllOpenOrders(true)));
 
             List<OrderData> binanceOrdersToPositionData = PositionMapper.BinanceOrdersToPositionData(orders);
             return binanceOrdersToPositionData;
@@ -173,7 +168,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
         return new List<OrderData> { };
     }
 
-    public virtual async Task CancelOpenOrdersAsync(List<OrderData> orderDatas)
+    public override async Task CancelOpenOrdersAsync(List<OrderData> orderDatas)
     {
         foreach (var order in orderDatas)
         {
@@ -182,7 +177,7 @@ public class BinanceUMFuturesServiceWrapper : IExchangeServiceWrapper
             {
                 orderInfo = await Task.Run(() =>
                     ExecuteWithExceptionHandling.Execute(() =>
-                        _client.Trade.CancelOrder(order.Symbol, long.Parse(order.OrderId), 10000, false)));
+                        _client.Trade.CancelOrder(order.Symbol, long.Parse(order.OrderId), 10000, true)));
                 if (orderInfo != null && orderInfo.Status != null)
                 {
                     LogList.AddLog("Отмена ордера: " + order + ". Статус: " + orderInfo.Status);

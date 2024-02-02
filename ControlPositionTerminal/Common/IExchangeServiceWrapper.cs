@@ -36,7 +36,7 @@ namespace ControlPositionTerminal.Common
         /// </summary>
         /// <param name="positionData">Объект PositionData, представляющий позицию для закрытия.</param>
         /// <param name="partSize">Размер позиции для закрытия.</param>
-        Task CloseSelectPositionAsync(PositionData positionData, string partSize);
+        Task CloseSelectPositionAsync(List<PositionData> closePositions, string partSize);
 
         /// <summary>
         /// Получить только открытые позиции с объемом, отличным от 0.
@@ -45,7 +45,16 @@ namespace ControlPositionTerminal.Common
         /// <param name="positions">Список позиций разных типов от разных бирж.</param>
         /// <returns>Список открытых позиций.</returns>
         List<PositionData> GetOnlyOpenPositionDataFromResult<T>(List<T> positions);
-
+        /// <summary>
+        /// Получить все ордера.
+        /// </summary>
+        /// <returns>Список объектов OrderData, представляющих открытые ордера.</returns>
+        Task<List<OrderData>> RetrieveAllOpenOrdersAsync();
+        /// <summary>
+        /// Отменить ордер/ордера.
+        /// </summary>
+        /// <returns>Список объектов OrderData, представляющих открытые ордера.</returns>
+        Task CancelOpenOrdersAsync(List<OrderData> orderDatas);
 
     }
 }

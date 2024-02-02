@@ -8,10 +8,11 @@ using GBasicExchangeDefinitions;
 using GBinanceFuturesClient.Model.Trade;
 using Io.Gate.GateApi.Model;
 
-namespace ControlPositionTerminal.Common.mapper
+namespace ControlPositionTerminal.Common.Mapper
 {
   public class PositionMapper
   {
+    #region position
     /// <summary>
     /// Преобразует объект PositionData в PositionInforamtionItem для BinanceFutures.
     /// </summary>
@@ -20,11 +21,15 @@ namespace ControlPositionTerminal.Common.mapper
     public static PositionInforamtionItem PositionDataToPositionInforamtionItem(PositionData position)
     {
       PositionInforamtionItem dto = new PositionInforamtionItem();
+      if (position.Amount == "нет")
+      {
+        return dto;
+      }
 
       dto.Symbol = position.Symbol;
       dto.PositionAmount = decimal.Parse(position.Amount);
       dto.EntryPrice = decimal.Parse(position.EntryPrice);
-      dto.PositionSide = (PositionSide)Enum.Parse(typeof (PositionSide), position.Side);
+      dto.PositionSide = (PositionSide)Enum.Parse(typeof(PositionSide), position.Side);
 
       return dto;
     }
@@ -98,7 +103,60 @@ namespace ControlPositionTerminal.Common.mapper
       }
       return dtoList;
     }
+    #endregion
 
+    #region order
+    /// <summary>
+    /// Преобразует список объектов PositionInforamtionItem в список объектов PositionData.
+    /// </summary>
+    /// <param name="orders">Список позиций BinanceFutures</param>
+    /// <returns>Список позиций общего вида PositionData</returns>
+    public static List<OrderData> BinanceOrdersToPositionData<T>(List<T> orders)
+    {
+      List<OrderData> dtoList = new List<OrderData>();
+      int posCnt = 1;
+      foreach (OrderInfo order in orders.Cast<OrderInfo>())
+      {
+
+        OrderData dto = new OrderData();
+        dto.Num = posCnt++.ToString();
+        dto.Symbol = order.Symbol;
+        dto.Price = order.Price.ToString(CultureInfo.CurrentCulture);
+        dto.Amount = order.OrigQty.ToString();
+        dto.OrderSide = order.Side.ToString();
+        dto.OrderId = order.OrderId.ToString();
+        dto.UTCTime = new DateTime(1970, 1, 1).AddMilliseconds(order.Time).ToString();
+        dtoList.Add(dto);
+      }
+
+      return dtoList;
+    }
+
+    /// <summary>
+    /// Преобразует список объектов Position в список объектов PositionData для GateIo.
+    /// </summary>
+    /// <param name="orders">Список позиций GateIo</param>
+    /// <returns>Список позиций общего вида PositionData</returns>
+    public static List<OrderData> GateIoOrdersToPositionData<T>(List<T> orders)
+    {
+
+      List<OrderData> dtoList = new List<OrderData>();
+      int posCnt = 1;
+      foreach (FuturesOrder order in orders.Cast<FuturesOrder>())
+      {
+        OrderData dto = new OrderData();
+        dto.Num = posCnt++.ToString();
+        dto.Symbol = order.Contract;
+        dto.Price = order.Price;
+        dto.Amount = order.Size.ToString();
+        dto.OrderSide = order.Size > 0 ? PositionSideEnum.LONG.ToString() : PositionSideEnum.SHORT.ToString();
+        dto.OrderId = order.Id.ToString();
+        dto.UTCTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(order.CreateTime).ToString();
+        dtoList.Add(dto);
+      }
+      return dtoList;
+    }
+    #endregion
 
   }
 }

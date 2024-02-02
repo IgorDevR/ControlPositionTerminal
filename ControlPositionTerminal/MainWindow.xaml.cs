@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -22,7 +23,10 @@ using ControlPositionTerminal.Common.UserSettings;
 using ControlPositionTerminal.Properties;
 using ControlPositionTerminal.Util;
 using ControlPositionTerminal.Util.Enums;
+using GBinanceFuturesClient;
+using GBinanceFuturesClient.Model.Market;
 using Io.Gate.GateApi.Model;
+using OrderBook = GBinanceFuturesClient.Model.Market.OrderBook;
 
 namespace ControlPositionTerminal
 {
@@ -45,11 +49,24 @@ namespace ControlPositionTerminal
             AddColumnInTables();
 
             SymbolAndLeverageDataGrid.SelectionChanged += SymbolAndLeverageDataGrid_SelectionChanged;
+            OpenOrdersDataGrid.SelectionChanged += OpenOrdersDataGrid_SelectionChanged;
+            OpenPositionDataGrid.SelectionChanged += SelectOpenPositionDataGrid_SelectionChanged;
             this.DataContext = viewModel;
 
         }
 
         #region work with open position tab
+
+
+        /// <summary>
+        /// Получить список позиций
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void RetrieveOpenPosition_Click(object sender, RoutedEventArgs e)
+        {
+            await RetrieveAndPaintOpenPositionAsync();
+        }
 
         /// <summary>
         /// Получить список позиций и установить их в таблицу для отображения
@@ -66,38 +83,107 @@ namespace ControlPositionTerminal
             openPositions = PositionUtils.CheckAndAddEmptyPosition(openPositions);
 
             ObservableCollection<PositionData> positionDatas = new ObservableCollection<PositionData>(openPositions);
-            OpenPositionDataGrid.ItemsSource = positionDatas;
-        }
-        /// <summary>
-        /// Получить список позиций
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void RetrieveOpenPosition_Click(object sender, RoutedEventArgs e)
-        {
-            RetrieveAndPaintOpenPositionAsync();
+            ICollectionView view = CollectionViewSource.GetDefaultView(positionDatas);
+            view.GroupDescriptions.Add(new PropertyGroupDescription("Symbol"));
+            OpenPositionDataGrid.ItemsSource = view;
+            LogList.AddLog("Обновление всех позиций завершено.");
         }
 
-        private async void CloseAll_Click(object sender, RoutedEventArgs e)
+        private string SelectOpenPosInTable()
         {
-            await Close(sender, "0");
+            int startIndex = SelectOpenPositionTextBlock.Text.IndexOf(":") + 1;
+            int lastIndex = SelectOpenPositionTextBlock.Text.IndexOf(".");
+            string selectOrderNumInTable =
+                SelectOpenPositionTextBlock.Text.Substring(startIndex, lastIndex - startIndex).Replace(" ", "");
+
+            if (selectOrderNumInTable.Length != 0)
+            {
+                return selectOrderNumInTable;
+            }
+
+            LogList.AddLog($"Ошибка при выбое символа.");
+            return "";
         }
 
-        private async void ClosePart_Click(object sender, RoutedEventArgs e)
+        private async void CloseSelectFullSize_Click(object sender, RoutedEventArgs e)
         {
-            await Close(sender, SizePartClosePositionTextBox.Text);
+            await CloseSelectAsync("0");
         }
 
-        private async Task Close(object sender, string size)
+        private async void CloseSelectPartSize_Click(object sender, RoutedEventArgs e)
+        {
+            await CloseSelectAsync(SizePartClosePositionTextBox.Text);
+        }
+
+        private async void CloseAllPositionFullSize_Click(object sender, RoutedEventArgs e)
+        {
+            List<PositionData> positionDatas = new List<PositionData>();
+            foreach (var item in OpenPositionDataGrid.Items)
+            {
+                if (item is PositionData row)
+                {
+                    positionDatas.Add(row);
+                }
+            }
+
+            await ClosePosition(positionDatas, "0");
+        }
+
+        private async Task CloseSelectAsync(string partSize)
+        {
+            List<PositionData> positionDatas = new List<PositionData>();
+
+            string selectOpenPosInTable = SelectOpenPosInTable();
+
+            if ((selectOpenPosInTable.Length != 0 && partSize.Length == 0) || !decimal.TryParse(partSize,
+                    NumberStyles.Any, CultureInfo.InvariantCulture, out decimal sizeD))
+            {
+                LogList.AddLog("Размер позиции указан не верно.");
+                return;
+            }
+
+            foreach (var item in OpenPositionDataGrid.Items)
+            {
+                if (item is PositionData row && row.Num == selectOpenPosInTable)
+                {
+                    positionDatas.Add(row);
+                    break;
+                }
+            }
+            await ClosePosition(positionDatas, partSize);
+        }
+
+        private async Task ClosePosition(List<PositionData> positionDatas, string partSize)
         {
             LogList.AddLog("Выполняется зыкрытие позиции. Ожидайте...");
-            var button = (Button)sender;
-            var positionData = (PositionData)button.DataContext;
             IExchangeServiceWrapper exchangeServiceWrapper = AppSettings.GetInstance().GetExchangeService();
-            await exchangeServiceWrapper.CloseSelectPositionAsync(positionData, size);
+            await exchangeServiceWrapper.CloseSelectPositionAsync(positionDatas, partSize);
+            LogList.AddLog("Зыкрытие позиций завершено.");
+            SelectOpenPositionTextBlock.Text = "";
             await RetrieveAndPaintOpenPositionAsync();
         }
 
+        /// <summary>
+        ///Обработчик выбора строки  SelectOpenPositionTextBlock
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SelectOpenPositionDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var dataGrid = sender as DataGrid;
+            if (dataGrid == null)
+                return;
+
+            var selectedRow = dataGrid.SelectedItem as PositionData;
+            if (selectedRow != null)
+            {
+                var num = selectedRow.Num;
+                var symbol = selectedRow.Symbol;
+                var price = selectedRow.EntryPrice;
+                var size = selectedRow.Amount;
+                SelectOpenPositionTextBlock.Text = "Num: " + num + ". Symb: " + symbol + ". Price:" + price + ". Size: " + size;
+            }
+        }
         #endregion
 
         #region work with leverage tab
@@ -141,6 +227,7 @@ namespace ControlPositionTerminal
             List<InitialLeverage> symbolAndLeverage = (List<InitialLeverage>)await exchangeServiceWrapper.RetrieveAllLeverageCoinsAsync();
             var initialLeveragesSorted = new ObservableCollection<InitialLeverage>(symbolAndLeverage.OrderBy(item => item.Leverage_limit));
             SymbolAndLeverageDataGrid.ItemsSource = initialLeveragesSorted;
+            LogList.AddLog("Обновление всех позиций и плечей завершено.");
         }
 
         /// <summary>
@@ -185,6 +272,7 @@ namespace ControlPositionTerminal
             await exchangeServiceWrapper.SetNewValueLeverage(selectSymbol, NewLeverageValueTextBlock.Text);
             SymbolAndLeverageDataGrid.SelectedItem = null;
             SelectLeverageSymbolTextBlock.Text = "";
+            LogList.AddLog("Изменение плечей завершено.");
             await RetrieveSymbolAndLeverageAllCoinsAsync();
         }
         #endregion
@@ -246,7 +334,7 @@ namespace ControlPositionTerminal
         private void SetConfigKeysValueField()
         {
             var thisFields = this.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-            var configFields = typeof(AppSettings).GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            var configFields = typeof(AppSettings).GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
             foreach (var thisField in thisFields)
             {
@@ -254,7 +342,7 @@ namespace ControlPositionTerminal
                 foreach (var configField in configFields)
                 {
 
-                    if (configField.Name.Contains(thisField.Name))
+                    if (configField.Name.Equals(thisField.Name))
                     {
                         try
                         {
@@ -298,6 +386,8 @@ namespace ControlPositionTerminal
         {
             AddAndSetColumnInTableOpenPositionDataGrid();
             AddAndSetColumnInTableSymbolAndLeverageDataGrid();
+            AddAndSetColumnInTableOpenOrdersDataGrid();
+            //AddAndSetColumnInTableCloseOrdersDataGrid();
         }
         private void AddAndSetColumnInTableOpenPositionDataGrid()
         {
@@ -314,34 +404,11 @@ namespace ControlPositionTerminal
                 var column = new DataGridTextColumn
                 {
                     Header = property.Name,
-                    Binding = new Binding(property.Name)
+                    Binding = new Binding(property.Name),
+                    IsReadOnly = true,
                 };
                 OpenPositionDataGrid.Columns.Add(column);
             }
-
-            // Добавляем колонку с кнопкой "Закрыть"
-            var closeColumn = new DataGridTemplateColumn
-            {
-                Header = "Закрыть",
-                CellTemplate = new DataTemplate()
-            };
-            FrameworkElementFactory buttonFactory = new FrameworkElementFactory(typeof(Button));
-            buttonFactory.SetValue(Button.ContentProperty, "Закрыть");
-            buttonFactory.AddHandler(Button.ClickEvent, new RoutedEventHandler(CloseAll_Click));
-            closeColumn.CellTemplate.VisualTree = buttonFactory;
-            OpenPositionDataGrid.Columns.Add(closeColumn);
-
-            // Добавляем колонку с кнопкой "Закрыть частично"
-            var closePartColumn = new DataGridTemplateColumn
-            {
-                Header = "Закрыть частично",
-                CellTemplate = new DataTemplate()
-            };
-            FrameworkElementFactory buttonPartFactory = new FrameworkElementFactory(typeof(Button));
-            buttonPartFactory.SetValue(Button.ContentProperty, "Закрыть");
-            buttonPartFactory.AddHandler(Button.ClickEvent, new RoutedEventHandler(ClosePart_Click));
-            closePartColumn.CellTemplate.VisualTree = buttonPartFactory;
-            OpenPositionDataGrid.Columns.Add(closePartColumn);
 
 
         }
@@ -368,37 +435,63 @@ namespace ControlPositionTerminal
             }
             SymbolAndLeverageDataGrid.Columns[1].SortDirection = ListSortDirection.Ascending;
         }
+        private void AddAndSetColumnInTableOpenOrdersDataGrid()
+        {
+            // Удаляем все существующие колонки
+            OpenOrdersDataGrid.Columns.Clear();
+
+            // Создаем колонки для каждого свойства в OrderData 
+            foreach (PropertyInfo property in typeof(OrderData).GetProperties())
+            {
+                // Пропускаем свойства, которые не должны отображаться в DataGrid
+                if (property.Name == "HiddenProperty")
+                    continue;
+
+                var column = new DataGridTextColumn
+                {
+                    Header = property.Name.Replace("_", " "),
+                    Binding = new Binding(property.Name),
+                    Width = DataGridLength.Auto,
+                    IsReadOnly = true,
+                };
+                OpenOrdersDataGrid.Columns.Add(column);
+            }
+        }
+
         #endregion
 
         #region load 
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
+            Properties.Settings.Default.MainWindowTitle = MainWindowName.Text;
             Properties.Settings.Default.WindowLocation = new System.Drawing.Point((int)this.Left, (int)this.Top);
             Properties.Settings.Default.WindowSize = new System.Drawing.Size((int)this.Width, (int)this.Height);
             Properties.Settings.Default.Save();
         }
         private void LoadWindowPositions()
         {
+            this.Title = Properties.Settings.Default.MainWindowTitle;
             this.Left = Properties.Settings.Default.WindowLocation.X;
             this.Top = Properties.Settings.Default.WindowLocation.Y;
             this.Height = Properties.Settings.Default.WindowSize.Height;
             this.Width = Properties.Settings.Default.WindowSize.Width;
         }
+        #endregion
 
-
+        #region work set value on start
         /// <summary>
         /// Установить значения в начальные поля после загрузки из файла при старте
         /// </summary>
         private void SetTextFieldFromLoadSettings()
         {
             var thisFields = this.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-            var configFields = typeof(AppSettings).GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            var configFields = typeof(AppSettings).GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
             foreach (var thisField in thisFields)
             {
                 foreach (var configField in configFields)
                 {
-                    if (configField.Name.Contains(thisField.Name))
+                    if (configField.Name.Equals(thisField.Name))
                     {
                         try
                         {
@@ -432,7 +525,6 @@ namespace ControlPositionTerminal
                 }
             }
         }
-
         /// <summary>
         /// Установить доступные типы в комбо бокс при старте
         /// </summary>
@@ -442,9 +534,92 @@ namespace ControlPositionTerminal
             SelectedMarketType.ItemsSource = Enum.GetValues(typeof(TypesMarketEnum));
             SelectedCoinType.ItemsSource = Enum.GetValues(typeof(TypesMarketCoinEnum));
         }
+        #endregion
 
+        #region work with order tab
+        /// <summary>
+        ///Обработчик выбора строки в таблицы плечей SelectLeverageSymbolTextBlock
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OpenOrdersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var dataGrid = sender as DataGrid;
+            if (dataGrid == null)
+                return;
+
+            var selectedRow = dataGrid.SelectedItem as OrderData;
+            if (selectedRow != null)
+            {
+                var num = selectedRow.Num;
+                var symbol = selectedRow.Symbol;
+                var price = selectedRow.Price;
+                var size = selectedRow.Amount;
+                SelectOpenOrdersTextBlock.Text = "Num: " + num + ". Symb: " + symbol + ". Price:" + price + ". Size: " + size;
+            }
+        }
+        private async void RetrieveOpenOrders_Click(object sender, RoutedEventArgs e)
+        {
+            await RetrieveOpenOrdersAsync();
+        }
+        private async Task RetrieveOpenOrdersAsync()
+        {
+            LogList.AddLog("Выполняется обновление всех ордеров. Ожидайте...");
+            OpenOrdersDataGrid.ItemsSource = null;
+            // CloseOrdersDataGrid.ItemsSource = null;
+            IExchangeServiceWrapper exchangeServiceWrapper = AppSettings.Instance.GetExchangeService();
+            List<OrderData> openPositions = await exchangeServiceWrapper.RetrieveAllOpenOrdersAsync();
+            openPositions = PositionUtils.CheckAndAddEmptyOrder(openPositions);
+
+            ObservableCollection<OrderData> positionDatas = new ObservableCollection<OrderData>(openPositions);
+            ICollectionView view = CollectionViewSource.GetDefaultView(positionDatas);
+            view.GroupDescriptions.Add(new PropertyGroupDescription("Symbol"));
+            OpenOrdersDataGrid.ItemsSource = view;
+            LogList.AddLog("Обновление ордеров завершено.");
+        }
+
+        private async void CancelSelectOrder_Click(object sender, RoutedEventArgs e)
+        {
+            int startIndex = SelectOpenOrdersTextBlock.Text.IndexOf(":") + 1;
+            int lastIndex = SelectOpenOrdersTextBlock.Text.IndexOf(".");
+            string selectOrderNumInTable = SelectOpenOrdersTextBlock.Text.Substring(startIndex, lastIndex - startIndex).Replace(" ", "");
+
+            if (selectOrderNumInTable.Length != 0)
+            {
+                await CancelOrdersAsync(selectOrderNumInTable);
+                return;
+            }
+            LogList.AddLog($"Ошибка при выбое символа.");
+        }
+
+        private async void CancelAllOrders(object sender, RoutedEventArgs e)
+        {
+            await CancelOrdersAsync("");
+        }
+
+        private async Task CancelOrdersAsync(string selectOrderNumInTable)
+        {
+            LogList.AddLog("Выполняется отмена ордеров. Ожидайте...");
+            List<OrderData> orderDatas = new List<OrderData>();
+            foreach (var item in OpenOrdersDataGrid.Items)
+            {
+                var row = item as OrderData;
+                if (row != null && (row.Num == selectOrderNumInTable || selectOrderNumInTable.Length == 0))
+                {
+                    orderDatas.Add(row);
+                }
+            }
+
+            IExchangeServiceWrapper exchangeServiceWrapper = AppSettings.Instance.GetExchangeService();
+            await exchangeServiceWrapper.CancelOpenOrdersAsync(orderDatas);
+            LogList.AddLog("Отмена ордеров завершена.");
+            SelectOpenOrdersTextBlock.Text = "";
+            await RetrieveOpenOrdersAsync();
+        }
 
 
         #endregion
+
+
     }
 }

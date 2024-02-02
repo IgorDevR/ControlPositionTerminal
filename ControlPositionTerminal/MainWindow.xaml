@@ -7,7 +7,7 @@
         xmlns:util="clr-namespace:ControlPositionTerminal.Util"
         d:DataContext="{d:DesignInstance Type=local:ViewModel}"
         mc:Ignorable="d"
-        Closing="MainWindow_OnClosing"
+                Closing="MainWindow_OnClosing"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <TabControl Margin="0,0,0,118">
@@ -15,34 +15,83 @@
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
                         <WrapPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Button Content="Получить открытые позиции"  Margin="0,10,0,0" Click="RetrieveOpenPosition_Click"/>
-                            <Label Content="Размер частично закрываемой позиции" VerticalAlignment="Bottom" Margin="10,20,0,0"/>
-                            <TextBox x:Name="SizePartClosePositionTextBox" Width="100"  Margin="10,20,0,0"/>
+                            <Button Content="Получить открытые " Click="RetrieveOpenPosition_Click" Height="29"/>
+                            <Label Content="Выбраная позиция:" Margin="10,5,5,5"/>
+                            <TextBox x:Name="SelectOpenPositionTextBlock" IsReadOnly="True" Width="200"  Height="23"/>
+                            <Label Content="Размер для закрытия:" Margin="5,5,5,5"/>
+                            <TextBox x:Name="SizePartClosePositionTextBox" Width="100" Height="21"  />
+                        </WrapPanel>
+                        <WrapPanel HorizontalAlignment="Center">
+                            <Button Content="Закрыть частично выбраную" Margin="20,10,10,10" Click="CloseSelectPartSize_Click"/>
+                            <Button Content="Закрыть полностью выбраную " Margin="20,10,10,10" Click="CloseSelectFullSize_Click"/>
+                            <Button Content="Закрыть полностью все позиции" Margin="20,10,10,10" Click="CloseAllPositionFullSize_Click"/>
                         </WrapPanel>
                         <StackPanel>
                             <ScrollViewer>
-                                <DataGrid x:Name="OpenPositionDataGrid" AutoGenerateColumns="False" MaxHeight="500">
+                                <DataGrid x:Name="OpenPositionDataGrid" AutoGenerateColumns="False" MaxHeight="220" Height="220">
+                                    <DataGrid.GroupStyle>
+                                        <GroupStyle>
+                                            <GroupStyle.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Path=Name}" />
+                                                </DataTemplate>
+                                            </GroupStyle.HeaderTemplate>
+                                        </GroupStyle>
+                                    </DataGrid.GroupStyle>
                                 </DataGrid>
                             </ScrollViewer>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
             </TabItem>
-            <TabItem Header="Leverage settings">
+            <TabItem Header="Order control">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
+                        <WrapPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Button Content="Получить все ордера"  Margin="5" Click="RetrieveOpenOrders_Click" Padding="1"/>
+                            <Label Content="Выбраный ордер:" Margin="5,5,5,5"/>
+                            <TextBox x:Name="SelectOpenOrdersTextBlock" IsReadOnly="True" Width="200"  Height="23"/>
+                        </WrapPanel>
+                        <WrapPanel HorizontalAlignment="Center">
+                            <Button Content="Отменить выбраный" Margin="20,10,10,10" Click="CancelSelectOrder_Click"/>
+                            <Button Content="Отменить все" Margin="20,10,10,10" Click="CancelAllOrders"/>
+                        </WrapPanel>
+
+                        <ScrollViewer >
+                            <DataGrid x:Name="OpenOrdersDataGrid" AutoGenerateColumns="False" MaxHeight="220" Height="220">
+                                <DataGrid.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Path=Name}" />
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </DataGrid.GroupStyle>
+                            </DataGrid>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Leverage settings">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="67*"/>
+                        <ColumnDefinition Width="330*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.ColumnSpan="2">
                         <WrapPanel HorizontalAlignment="Center" >
                             <Button Content="Получить список для всех монет" Margin="5,5,5,5" Click="GetAllSymbolCoinsAndLeverage_Click"/>
                             <Label Content="Монета:" Margin="5,5,5,5"/>
-                            <TextBox x:Name="SelectLeverageSymbolTextBlock" IsReadOnly="True" Width="100" Margin="5,5,5,5"/>
+                            <TextBox x:Name="SelectLeverageSymbolTextBlock" IsReadOnly="True" Width="100" Height="21"/>
                             <Label Content="Новое значение:" Margin="5,5,5,5"/>
-                            <TextBox x:Name="NewLeverageValueTextBlock" Width="100" Margin="5,5,5,5"/>
+                            <TextBox x:Name="NewLeverageValueTextBlock" Width="100" Height="23"/>
                         </WrapPanel>
                         <WrapPanel HorizontalAlignment="Center">
                             <Button Content="Установить новое значение" Margin="5,5,5,5" Click="SetNewValueLeverageSelectSymbol_Click"/>
                             <Button Content="Установить значение для всех монет" Margin="5,5,5,5" Click="SetNewValueLeverageAllSymbol_Click"/>
                         </WrapPanel>
-                        <DataGrid x:Name="SymbolAndLeverageDataGrid" AutoGenerateColumns="False" MaxHeight="500">
+                        <DataGrid x:Name="SymbolAndLeverageDataGrid" AutoGenerateColumns="False" MaxHeight="220" Height="220">
                         </DataGrid>
                     </StackPanel>
                 </Grid>
@@ -64,18 +113,18 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Api Key"/>
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Secret Key"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Spot Api" ToolTip="Spot Api"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Spot Secret" ToolTip="Spot Api"/>
                                 <TextBox Grid.Row="0" Grid.Column="1" x:Name="ApiKeyBinanceSpot" Width="300"/>
                                 <TextBox Grid.Row="0" Grid.Column="3" x:Name="SecretKeyBinanceSpot" Width="300"/>
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Api Key"/>
-                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Secret Key"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Futures Api" ToolTip="Futures Api"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Futures Secret" ToolTip="Futures Secret"/>
                                 <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApiKeyBinanceFutures" Width="300"/>
                                 <TextBox Grid.Row="1" Grid.Column="3" x:Name="SecretKeyBinanceFutures" Width="300"/>
 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Api Key"/>
-                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Secret Key"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Testnet Futures Api" ToolTip="Testnet Futures Api"/>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Testnet Futures Secret" ToolTip="Testnet Futures Api"/>
                                 <TextBox Grid.Row="2" Grid.Column="1" x:Name="ApiKeyBinanceFuturesTestnet" Width="300"/>
                                 <TextBox Grid.Row="2" Grid.Column="3" x:Name="SecretKeyBinanceFuturesTestnet" Width="300"/>
 
@@ -95,13 +144,13 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Api Key"/>
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Secret Key"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Spot Api" ToolTip="Spot Api"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Spot Secret" ToolTip="Spot Secret"/>
                                 <TextBox Grid.Row="0" Grid.Column="1" x:Name="ApiKeyGateIoSpot" Width="300"/>
                                 <TextBox Grid.Row="0" Grid.Column="3" x:Name="SecretKeyGateIoSpot" Width="300"/>
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Api Key"/>
-                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Secret Key"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Futures Api" ToolTip="Futures Api"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Futures Secret" ToolTip="Futures Secret"/>
                                 <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApiKeyGateIoFutures" Width="300"/>
                                 <TextBox Grid.Row="1" Grid.Column="3" x:Name="SecretKeyGateIoFutures" Width="300"/>
 
@@ -121,14 +170,26 @@
                         </GroupBox>
                         <Button Content="Сохранить/Обовить настройки" Padding="5" Margin="0,10,0,0" Click="SaveOrUpdateSettings_Click"/>
                     </StackPanel>
+                    <Label Content="Заголовок окна:" HorizontalAlignment="Left" Margin="0,262,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="MainWindowName" HorizontalAlignment="Left" Margin="104,270,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
                 </Grid>
             </TabItem>
         </TabControl>
         <Grid Background="#FFE5E5E5" Margin="0,321,0,0">
-            <ListView x:Name="PrimeLogListView" ItemsSource="{Binding Source={x:Static util:LogList.logList}}">
+            <ListView x:Name="PrimeLogListView" ItemsSource="{Binding Source={x:Static util:LogList.logList}}"  HorizontalAlignment="Stretch" Width="Auto">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Log" Width="800"/>
+                        <!--<GridViewColumn Header="Log" Width="Auto"/>-->
+                        <GridViewColumn>
+                            <GridViewColumn.Header>
+                                <TextBlock Text="Log"/>
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
             </ListView>
