@@ -22,8 +22,8 @@ namespace ControlPositionTerminal.Common.userSettings
                     //     return new BinanceSpotServiceWrapper(new SpotClientImpl(AppSettings.Instance.ApiKey_BINANCE_SPOT, AppSettings.Instance.SecretKey_BINANCE_SPOT));
                     case FullNameSelectServerEnum.Binance_UsdM_Futures:
                         return new BinanceUMFuturesServiceWrapper(AppSettings.Instance.ApiKeyBinanceFutures, AppSettings.Instance.SecretKeyBinanceFutures, false);
-                    // case FullNameSelectServerEnum.BINANCE_COINM_FUTURES:
-                    //     return new BinanceCMFuturesServiceWrapper(new CMFuturesClientImpl(AppSettings.Instance.ApiKey_BINANCE_FUTURES, AppSettings.Instance.SecretKey_BINANCE_FUTURES, AppSettings.Instance.CM_BASE_URL));
+                    case FullNameSelectServerEnum.Binance_CoinM_Futures:
+                        return new BinanceCMFuturesServiceWrapper(AppSettings.Instance.ApiKeyBinanceFutures, AppSettings.Instance.SecretKeyBinanceFutures, false);
                     case FullNameSelectServerEnum.Binance_UsdM_FuturesTestnet:
                         return new BinanceUMFuturesServiceWrapper(AppSettings.Instance.ApiKeyBinanceFuturesTestnet, AppSettings.Instance.SecretKeyBinanceFuturesTestnet, true);
                     case FullNameSelectServerEnum.Binance_CoinM_FuturesTestnet:

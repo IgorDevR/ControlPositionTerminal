@@ -10,10 +10,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace GBinanceFuturesClient
-{    
+{
     /// <summary>
-     /// Binance futures account/trade endpoints methods.
-     /// </summary>
+    /// Binance futures account/trade endpoints methods.
+    /// </summary>
     public class Trade
     {
         SessionData session;
@@ -49,6 +49,7 @@ namespace GBinanceFuturesClient
         #endregion*/
 
         #region Get Future Account Transaction History List
+
         /// <summary>
         /// Get future account transaction history list. Unavailable in testnet. Weight: 1.
         /// </summary>
@@ -58,14 +59,15 @@ namespace GBinanceFuturesClient
         /// <param name="current">Current page number, default: 1.</param>
         /// <param name="size">Limit of row count. default: 10, max: 100</param>
         /// <returns>Account transaction history object.</returns>
-        public AccountTransactionHistory GetAccountTransactionHistory(string asset, long startTime, long endTime = 0, int current = 1, int size = 10)
+        public AccountTransactionHistory GetAccountTransactionHistory(string asset, long startTime, long endTime = 0,
+            int current = 1, int size = 10)
         {
             Dictionary<string, string> query = new Dictionary<string, string>();
             query.Add("asset", asset);
             query.Add("startTime", startTime.ToString());
             query.Add("timestamp", Tools.NowUnixTime().ToString());
 
-            if(endTime != 0)
+            if (endTime != 0)
                 query.Add("endTime", endTime.ToString());
 
             if (current != 1)
@@ -75,11 +77,14 @@ namespace GBinanceFuturesClient
                 query.Add("size", size.ToString());
 
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
-            return manager.SendRequest<AccountTransactionHistory>(Config.ApiAccountTransferAndHistoryUrl + "transfer", query: query);
+            return manager.SendRequest<AccountTransactionHistory>(Config.ApiAccountTransferAndHistoryUrl + "transfer",
+                query: query);
         }
+
         #endregion
 
         #region Change Position Mode
+
         /// <summary>
         /// Change user's position mode (true for Hedge Mode or false for One-way Mode) on EVERY symbol. Weight: 1
         /// </summary>
@@ -92,7 +97,7 @@ namespace GBinanceFuturesClient
             query.Add("dualSidePosition", dualSidePosition.ToString().ToLower());
             query.Add("timestamp", Tools.NowUnixTime().ToString());
 
-            if(recvWindow != 5000)
+            if (recvWindow != 5000)
                 query.Add("recvWindow", recvWindow.ToString());
 
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
@@ -103,9 +108,11 @@ namespace GBinanceFuturesClient
             else
                 return false;
         }
+
         #endregion
 
         #region Get Current Position Mode
+
         /// <summary>
         /// Get user's position mode (Hedge Mode or One-way Mode ) on EVERY symbol. Weight: 30.
         /// </summary>
@@ -118,9 +125,11 @@ namespace GBinanceFuturesClient
 
             return response["dualSidePosition"];
         }
+
         #endregion
 
         #region Place New Order
+
         /// <summary>
         /// Place new order. Weight: 1.
         /// </summary>
@@ -147,14 +156,17 @@ namespace GBinanceFuturesClient
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
 
-            if(recvWindow != 5000)
+            if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest<OrderInfo>(Config.ApiPublicUrl + "order", MethodsType.POST, objectToSend: request);
+            return manager.SendRequest<OrderInfo>(Config.ApiPublicUrl + "order", MethodsType.POST,
+                objectToSend: request);
         }
+
         #endregion
 
         #region Place Multiple Orders
+
         /// <summary>
         /// Place multiple orders. Weight: 5.
         /// </summary>
@@ -166,7 +178,7 @@ namespace GBinanceFuturesClient
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
             manager.AddQueryParam("batchOrders", JsonTools.SerializeAsJson(listOfNewOrder));
 
-            return manager.SendRequest(Config.ApiPublicUrl + "batchOrders", MethodsType.POST, 
+            return manager.SendRequest(Config.ApiPublicUrl + "batchOrders", MethodsType.POST,
                 customDeserializer: new MultipleOrderCustomDeserializer<OrderInfo>());
         }
 
@@ -176,7 +188,8 @@ namespace GBinanceFuturesClient
         /// <param name="listOfNewOrder">List of orders</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of valid or error response, containing response on order. Responses in the order of the list sent.</returns>
-        public List<ValidOrErrorResponse<OrderInfo>> PlaceMultipleOrders(List<NewOrderRequest> listOfNewOrder, long recvWindow = 5000)
+        public List<ValidOrErrorResponse<OrderInfo>> PlaceMultipleOrders(List<NewOrderRequest> listOfNewOrder,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -188,9 +201,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicUrl + "batchOrders", MethodsType.POST,
                 customDeserializer: new MultipleOrderCustomDeserializer<OrderInfo>());
         }
+
         #endregion
 
         #region QueryOrder
+
         /// <summary>
         /// Get order info using orderId. Weight: 1.
         /// </summary>
@@ -232,9 +247,11 @@ namespace GBinanceFuturesClient
 
             return manager.SendRequest<OrderInfo>(Config.ApiPublicUrl + "order", MethodsType.GET);
         }
+
         #endregion
 
         #region Cancel Order
+
         /// <summary>
         /// Candel order using order id.
         /// </summary>
@@ -308,9 +325,11 @@ namespace GBinanceFuturesClient
 
             return manager.SendRequest<OrderInfo>(Config.ApiPublicUrl + "order", MethodsType.DELETE);
         }
+
         #endregion
 
         #region Cancel all open orders
+
         /// <summary>
         /// Delete all open order on one symbol. Weight: 1.
         /// </summary>
@@ -325,12 +344,14 @@ namespace GBinanceFuturesClient
 
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
-            
+
             return manager.SendRequest<Message>(Config.ApiPublicUrl + "allOpenOrders", MethodsType.DELETE);
         }
+
         #endregion
 
         #region Cancel multiple orders
+
         /// <summary>
         /// Cancel multiple order, using order id list.  Weight: 1.
         /// </summary>
@@ -338,7 +359,8 @@ namespace GBinanceFuturesClient
         /// <param name="orderIdList">List of order identificator to cancel</param>
         /// <param name="recvWindow">Recv window time in unix milisecond, default 5000.</param>
         /// <returns>List of valid or error response, containing response on order. Responses in the order of the list sent.</returns>
-        public List<ValidOrErrorResponse<OrderInfo>> CancelMultipleOrders(string symbol, List<long> orderIdList, long recvWindow = 5000)
+        public List<ValidOrErrorResponse<OrderInfo>> CancelMultipleOrders(string symbol, List<long> orderIdList,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -359,7 +381,8 @@ namespace GBinanceFuturesClient
         /// <param name="clientOrderIdList">List of client order identificator to cancel</param>
         /// <param name="recvWindow">Recv window time in unix milisecond, default 5000.</param>
         /// <returns>List of valid or error response, containing response on order. Responses in the order of the list sent.</returns>
-        public List<ValidOrErrorResponse<OrderInfo>> CancelMultipleOrders(string symbol, List<string> clientOrderIdList, long recvWindow = 5000)
+        public List<ValidOrErrorResponse<OrderInfo>> CancelMultipleOrders(string symbol, List<string> clientOrderIdList,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -372,9 +395,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicUrl + "batchOrders", MethodsType.DELETE,
                 customDeserializer: new MultipleOrderCustomDeserializer<OrderInfo>());
         }
+
         #endregion
 
         #region Auto-cancel all open orders
+
         /// <summary>
         /// Auto cancel all open orders using countdown. Weight: 10.
         /// </summary>
@@ -388,7 +413,8 @@ namespace GBinanceFuturesClient
             manager.AddQueryParam("symbol", symbol);
             manager.AddQueryParam("countdownTime", countdownTimer.ToString());
 
-            return manager.SendRequest<AutoCancelAllOpenOrdersResponse>(Config.ApiPublicUrl + "countdownCancelAll ", MethodsType.POST);
+            return manager.SendRequest<AutoCancelAllOpenOrdersResponse>(Config.ApiPublicUrl + "countdownCancelAll ",
+                MethodsType.POST);
         }
 
         /// <summary>
@@ -408,11 +434,14 @@ namespace GBinanceFuturesClient
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest<AutoCancelAllOpenOrdersResponse>(Config.ApiPublicUrl + "countdownCancelAll ", MethodsType.POST);
+            return manager.SendRequest<AutoCancelAllOpenOrdersResponse>(Config.ApiPublicUrl + "countdownCancelAll ",
+                MethodsType.POST);
         }
+
         #endregion
 
         #region Get query current open order
+
         /// <summary>
         /// Get current open order. Usind order id. Weight: 1.
         /// </summary>
@@ -452,9 +481,11 @@ namespace GBinanceFuturesClient
 
             return manager.SendRequest<OrderInfo>(Config.ApiPublicUrl + "openOrder", MethodsType.GET);
         }
+
         #endregion
 
         #region Get current all open orders
+
         /// <summary>
         /// Get current all open orders. Weight: 40
         /// </summary>
@@ -466,8 +497,11 @@ namespace GBinanceFuturesClient
 
             string apiPublicUrl = isCoinM ? Config.ApiPublicUrlCoinM : Config.ApiPublicUrl;
 
-            return manager.SendRequest(apiPublicUrl + "openOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            var orderInfo = manager.SendRequest(apiPublicUrl + "openOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return orderInfo;
         }
+
         /// <summary>
         /// Get current all open orders on one symbol. Weight: 1
         /// </summary>
@@ -479,7 +513,8 @@ namespace GBinanceFuturesClient
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
             manager.AddQueryParam("symbol", symbol);
 
-            return manager.SendRequest(Config.ApiPublicUrl + "openOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return manager.SendRequest(Config.ApiPublicUrl + "openOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
         }
 
         /// <summary>
@@ -497,11 +532,14 @@ namespace GBinanceFuturesClient
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest(Config.ApiPublicUrl + "openOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return manager.SendRequest(Config.ApiPublicUrl + "openOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
         }
+
         #endregion
 
         #region Get all orders
+
         /// <summary>
         /// Get all orders from account. Weight: 5.
         /// </summary>
@@ -517,11 +555,12 @@ namespace GBinanceFuturesClient
 
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
-            
-            if(limit != 500)
+
+            if (limit != 500)
                 manager.AddQueryParam("limit", limit.ToString());
 
-            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
         }
 
         /// <summary>
@@ -545,7 +584,8 @@ namespace GBinanceFuturesClient
             if (limit != 500)
                 manager.AddQueryParam("limit", limit.ToString());
 
-            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
         }
 
         /// <summary>
@@ -557,7 +597,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of order, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of order information object</returns>
-        public List<OrderInfo> GetAllOrders(string symbol, long startTime, long endTime, int limit = 500, long recvWindow = 5000)
+        public List<OrderInfo> GetAllOrders(string symbol, long startTime, long endTime, int limit = 500,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -571,11 +612,14 @@ namespace GBinanceFuturesClient
             if (limit != 500)
                 manager.AddQueryParam("limit", limit.ToString());
 
-            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
+            return manager.SendRequest(Config.ApiPublicUrl + "allOrders", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<OrderInfo>());
         }
+
         #endregion
 
         #region Futures account balance V2
+
         /// <summary>
         /// Gett account balances. Weight: 1.
         /// </summary>
@@ -585,7 +629,8 @@ namespace GBinanceFuturesClient
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
 
-            return manager.SendRequest(Config.ApiPublicV2Url + "balance", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<AccountBalance>());
+            return manager.SendRequest(Config.ApiPublicV2Url + "balance", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<AccountBalance>());
         }
 
         /// <summary>
@@ -601,11 +646,14 @@ namespace GBinanceFuturesClient
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest(Config.ApiPublicV2Url + "balance", MethodsType.GET, customDeserializer: new SingleOrArrayCustromDeserializer<AccountBalance>());
+            return manager.SendRequest(Config.ApiPublicV2Url + "balance", MethodsType.GET,
+                customDeserializer: new SingleOrArrayCustromDeserializer<AccountBalance>());
         }
+
         #endregion
 
         #region Get account inforamtion v2
+
         /// <summary>
         /// Get account information.
         /// </summary>
@@ -628,14 +676,16 @@ namespace GBinanceFuturesClient
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
 
-            if(recvWindow != 5000)
+            if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
             return manager.SendRequest(Config.ApiPublicV2Url + "account", MethodsType.GET);
         }
+
         #endregion
 
         #region Change initial lavarage
+
         /// <summary>
         /// Change user's initial leverage of specific symbol market. Weight: 1.
         /// </summary>
@@ -643,7 +693,8 @@ namespace GBinanceFuturesClient
         /// <param name="leverage">Target initial leverage: int from 1 to 125</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>Changed leverage info</returns>
-        public ChangeLeverageInfo ChangeLeverage(string symbol, int leverage, long recvWindow = 5000, bool isCoinM = false)
+        public ChangeLeverageInfo ChangeLeverage(string symbol, int leverage, long recvWindow = 5000,
+            bool isCoinM = false)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -657,9 +708,11 @@ namespace GBinanceFuturesClient
 
             return manager.SendRequest<ChangeLeverageInfo>(apiPublicUrl + "leverage", MethodsType.POST);
         }
+
         #endregion
 
         #region Change margin type
+
         /// <summary>
         /// Change margin type betwen two option. Weight: 1
         /// </summary>
@@ -679,9 +732,11 @@ namespace GBinanceFuturesClient
 
             return manager.SendRequest<Message>(Config.ApiPublicUrl + "marginType", MethodsType.POST);
         }
+
         #endregion
 
         #region Modify isolated position margin
+
         /// <summary>
         /// Change isolated postion margin. Weight: 1.
         /// </summary>
@@ -690,7 +745,8 @@ namespace GBinanceFuturesClient
         /// <param name="type">Change type: 1: Add position margin，2: Reduce position margin</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>Changed isolated postion margin object response</returns>
-        public ChangedIsolatedPostionMargin ChangeIsolatedPostionMargin(string symbol, decimal amount, int type, long recvWindow = 5000)
+        public ChangedIsolatedPostionMargin ChangeIsolatedPostionMargin(string symbol, decimal amount, int type,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -701,7 +757,8 @@ namespace GBinanceFuturesClient
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest<ChangedIsolatedPostionMargin>(Config.ApiPublicUrl + "positionMargin", MethodsType.POST);
+            return manager.SendRequest<ChangedIsolatedPostionMargin>(Config.ApiPublicUrl + "positionMargin",
+                MethodsType.POST);
         }
 
         /// <summary>
@@ -713,7 +770,8 @@ namespace GBinanceFuturesClient
         /// <param name="type">Change type: 1: Add position margin，2: Reduce position margin</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>Changed isolated postion margin object response</returns>
-        public ChangedIsolatedPostionMargin ChangeIsolatedPostionMargin(string symbol, PositionSide positionSide, decimal amount, int type, long recvWindow = 5000)
+        public ChangedIsolatedPostionMargin ChangeIsolatedPostionMargin(string symbol, PositionSide positionSide,
+            decimal amount, int type, long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -725,11 +783,14 @@ namespace GBinanceFuturesClient
             if (recvWindow != 5000)
                 manager.AddQueryParam("recvWindow", recvWindow.ToString());
 
-            return manager.SendRequest<ChangedIsolatedPostionMargin>(Config.ApiPublicUrl + "positionMargin", MethodsType.POST);
+            return manager.SendRequest<ChangedIsolatedPostionMargin>(Config.ApiPublicUrl + "positionMargin",
+                MethodsType.POST);
         }
+
         #endregion
 
         #region Get postion margin change history
+
         /// <summary>
         /// Get postion margin change history. Weight: 1.
         /// </summary>
@@ -737,7 +798,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of history items</returns>
-        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, int limit = 500, long recvWindow = 5000)
+        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, int limit = 500,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -750,7 +812,7 @@ namespace GBinanceFuturesClient
             if (limit != 500)
                 manager.AddQueryParam("limit", limit.ToString());
 
-            return manager.SendRequest(Config.ApiPublicUrl + "positionMargin/history", MethodsType.GET, 
+            return manager.SendRequest(Config.ApiPublicUrl + "positionMargin/history", MethodsType.GET,
                 customDeserializer: new SingleOrArrayCustromDeserializer<PostionMarginChangeHistoryItem>());
         }
 
@@ -762,7 +824,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of history items</returns>
-        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, int type, int limit = 500, long recvWindow = 5000)
+        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, int type,
+            int limit = 500, long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -789,7 +852,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of history items</returns>
-        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, long startTime, long endTime,
+        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, long startTime,
+            long endTime,
             int limit = 500, long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
@@ -819,7 +883,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of history items</returns>
-        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, long startTime, long endTime, int type,
+        public List<PostionMarginChangeHistoryItem> GetPositionMarginChangeHistory(string symbol, long startTime,
+            long endTime, int type,
             int limit = 500, long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
@@ -839,9 +904,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicUrl + "positionMargin/history", MethodsType.POST,
                 customDeserializer: new SingleOrArrayCustromDeserializer<PostionMarginChangeHistoryItem>());
         }
+
         #endregion
 
         #region Get postion information
+
         /// <summary>
         /// Get postion information. Wieght: 1.
         /// </summary>
@@ -850,7 +917,7 @@ namespace GBinanceFuturesClient
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
-            
+
             string apiPublicUrl = isCoinM ? Config.ApiPublicUrlCoinM : Config.ApiPublicV2Url;
 
             var positionInforamtionItem = manager.SendRequest(apiPublicUrl + "positionRisk", MethodsType.GET,
@@ -894,9 +961,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicV2Url + "positionRisk", MethodsType.GET,
                 customDeserializer: new SingleOrArrayCustromDeserializer<PositionInforamtionItem>());
         }
+
         #endregion
 
         #region Get account trade list
+
         /// <summary>
         /// Get account trade list. Weight: 5.
         /// </summary>
@@ -929,7 +998,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of orders</returns>
-        public List<AccountTradeItem> GetAccountTradeList(string symbol, long startTime, long endTime, int limit = 500, long recvWindow = 5000)
+        public List<AccountTradeItem> GetAccountTradeList(string symbol, long startTime, long endTime, int limit = 500,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -955,7 +1025,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of orders</returns>
-        public List<AccountTradeItem> GetAccountTradeList(string symbol, long fromId, int limit = 500, long recvWindow = 5000)
+        public List<AccountTradeItem> GetAccountTradeList(string symbol, long fromId, int limit = 500,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -982,7 +1053,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of orders</returns>
-        public List<AccountTradeItem> GetAccountTradeList(string symbol, long startTime, long endTime, long fromId, int limit = 500, long recvWindow = 5000)
+        public List<AccountTradeItem> GetAccountTradeList(string symbol, long startTime, long endTime, long fromId,
+            int limit = 500, long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -1000,9 +1072,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicUrl + "positionRisk", MethodsType.GET,
                 customDeserializer: new SingleOrArrayCustromDeserializer<AccountTradeItem>());
         }
+
         #endregion
 
         #region Get income history
+
         /// <summary>
         /// Get income history. Weight: 20.
         /// </summary>
@@ -1083,7 +1157,8 @@ namespace GBinanceFuturesClient
         /// <param name="limit">Limit of item, default: 500, max: 1000</param>
         /// <param name="recvWindow">Custom recvWindow, default: 5000</param>
         /// <returns>List of income history items</returns>
-        public List<IncomeHistoryItem> GetIncomeHistory(string symbol, IncomeType incomeType, int limit = 500, long recvWindow = 5000)
+        public List<IncomeHistoryItem> GetIncomeHistory(string symbol, IncomeType incomeType, int limit = 500,
+            long recvWindow = 5000)
         {
             RequestManager manager = new RequestManager(session, Autorization.TRADING);
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
@@ -1129,9 +1204,11 @@ namespace GBinanceFuturesClient
             return manager.SendRequest(Config.ApiPublicUrl + "income", MethodsType.GET,
                 customDeserializer: new SingleOrArrayCustromDeserializer<IncomeHistoryItem>());
         }
+
         #endregion
 
         #region Get Notional and Leverage Brackets
+
         /// <summary>
         /// Get Notional and Leverage Brackets. Weight: 1.
         /// </summary>
@@ -1151,12 +1228,14 @@ namespace GBinanceFuturesClient
         /// <returns>Brackets object.</returns>
         public NationalAndLeverageBrackets GetNationalBrackets(string symbol)
         {
-            RequestManager manager = new RequestManager(session, Autorization.TRADING); ;
+            RequestManager manager = new RequestManager(session, Autorization.TRADING);
+            ;
             manager.AddQueryParam("timestamp", Tools.NowUnixTime().ToString());
             manager.AddQueryParam("symbol", symbol);
 
             return manager.SendRequest<NationalAndLeverageBrackets>(Config.ApiPublicUrl + "leverageBracket");
         }
+
         #endregion
     }
 }
